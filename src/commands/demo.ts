@@ -8,7 +8,7 @@ import {
 	verifyPresentation,
 } from "credat";
 import pc from "picocolors";
-import { fail, header, label, sleep, step, success, truncate } from "../utils.js";
+import { fail, label, sleep, step, success, truncate } from "../utils.js";
 
 export async function demoCommand(): Promise<void> {
 	console.log();
@@ -61,9 +61,7 @@ export async function demoCommand(): Promise<void> {
 		maxTransactionValue: 1000,
 		allowedDomains: ["api.stripe.com", "api.acme.corp"],
 	};
-	const validUntil = new Date(
-		Date.now() + 24 * 60 * 60 * 1000,
-	).toISOString();
+	const validUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
 	const delegation = await delegate({
 		agent: agent.did,
@@ -153,11 +151,7 @@ export async function demoCommand(): Promise<void> {
 	step(8, "Check Scopes");
 	await sleep(200);
 
-	const checks = [
-		"payments:create",
-		"payments:read",
-		"admin:delete",
-	];
+	const checks = ["payments:create", "payments:read", "admin:delete"];
 
 	for (const scope of checks) {
 		const has = hasScope(handshakeResult, scope);
@@ -170,13 +164,9 @@ export async function demoCommand(): Promise<void> {
 
 	// ── Summary ──
 	console.log();
-	console.log(
-		pc.bold(pc.cyan("  ══════════════════════════════════════════")),
-	);
+	console.log(pc.bold(pc.cyan("  ══════════════════════════════════════════")));
 	console.log();
-	console.log(
-		`  ${pc.bold("The full trust flow completed successfully.")}`,
-	);
+	console.log(`  ${pc.bold("The full trust flow completed successfully.")}`);
 	console.log();
 	console.log(
 		`  ${pc.dim("Owner")} ${pc.bold("→")} ${pc.dim("delegated scopes to")} ${pc.bold("→")} ${pc.dim("Agent")}`,
@@ -188,8 +178,6 @@ export async function demoCommand(): Promise<void> {
 		`  ${pc.dim("Service")} ${pc.bold("→")} ${pc.dim("verified delegation + proof")} ${pc.bold("→")} ${pc.green("Trusted")}`,
 	);
 	console.log();
-	console.log(
-		pc.dim("  No passwords. No API keys. Just cryptographic trust."),
-	);
+	console.log(pc.dim("  No passwords. No API keys. Just cryptographic trust."));
 	console.log();
 }

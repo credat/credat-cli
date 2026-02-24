@@ -1,6 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	chmodSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
-import { uint8ArrayToBase64url, base64urlToUint8Array } from "credat";
+import { base64urlToUint8Array, uint8ArrayToBase64url } from "credat";
 import pc from "picocolors";
 
 const CREDAT_DIR = ".credat";
@@ -12,7 +18,7 @@ export function credatDir(): string {
 function ensureDir(): void {
 	const dir = credatDir();
 	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
+		mkdirSync(dir, { recursive: true, mode: 0o700 });
 	}
 }
 
@@ -24,7 +30,7 @@ interface SerializedKeyPair {
 	privateKey: string;
 }
 
-function serializeKeyPair(kp: {
+export function serializeKeyPair(kp: {
 	algorithm: string;
 	publicKey: Uint8Array;
 	privateKey: Uint8Array;
@@ -36,7 +42,7 @@ function serializeKeyPair(kp: {
 	};
 }
 
-function deserializeKeyPair(kp: SerializedKeyPair): {
+export function deserializeKeyPair(kp: SerializedKeyPair): {
 	algorithm: string;
 	publicKey: Uint8Array;
 	privateKey: Uint8Array;
@@ -76,10 +82,9 @@ export function saveAgent(agent: {
 		keyPair: serializeKeyPair(agent.keyPair),
 		didDocument: agent.didDocument,
 	};
-	writeFileSync(
-		join(credatDir(), "agent.json"),
-		JSON.stringify(data, null, "\t"),
-	);
+	const filePath = join(credatDir(), "agent.json");
+	writeFileSync(filePath, JSON.stringify(data, null, "\t"));
+	chmodSync(filePath, 0o600);
 }
 
 export function loadAgentFile(): SerializedAgent & {
@@ -91,9 +96,7 @@ export function loadAgentFile(): SerializedAgent & {
 } {
 	const path = join(credatDir(), "agent.json");
 	if (!existsSync(path)) {
-		throw new Error(
-			`No agent found. Run ${pc.bold("credat init")} first.`,
-		);
+		throw new Error(`No agent found. Run ${pc.bold("credat init")} first.`);
 	}
 	const raw = JSON.parse(readFileSync(path, "utf-8")) as SerializedAgent;
 	return {
@@ -118,10 +121,9 @@ export function saveOwner(owner: {
 		did: owner.did,
 		keyPair: serializeKeyPair(owner.keyPair),
 	};
-	writeFileSync(
-		join(credatDir(), "owner.json"),
-		JSON.stringify(data, null, "\t"),
-	);
+	const filePath = join(credatDir(), "owner.json");
+	writeFileSync(filePath, JSON.stringify(data, null, "\t"));
+	chmodSync(filePath, 0o600);
 }
 
 export function loadOwnerFile(): SerializedOwner & {
@@ -133,7 +135,7 @@ export function loadOwnerFile(): SerializedOwner & {
 } {
 	const path = join(credatDir(), "owner.json");
 	if (!existsSync(path)) {
-		return null as never; // caller handles
+		throw new Error(`No owner found. Run ${pc.bold("credat delegate")} first.`);
 	}
 	const raw = JSON.parse(readFileSync(path, "utf-8")) as SerializedOwner;
 	return {
@@ -148,15 +150,11 @@ export function ownerExists(): boolean {
 
 // ── Delegation file I/O ──
 
-export function saveDelegation(data: {
-	raw: string;
-	claims: unknown;
-}): void {
+export function saveDelegation(data: { raw: string; claims: unknown }): void {
 	ensureDir();
-	writeFileSync(
-		join(credatDir(), "delegation.json"),
-		JSON.stringify(data, null, "\t"),
-	);
+	const filePath = join(credatDir(), "delegation.json");
+	writeFileSync(filePath, JSON.stringify(data, null, "\t"));
+	chmodSync(filePath, 0o600);
 }
 
 // ── Formatting helpers ──
@@ -169,11 +167,11 @@ export function truncate(str: string, len = 60): string {
 export function header(text: string): void {
 	console.log();
 	console.log(pc.bold(pc.cyan(`  ${text}`)));
-	console.log(pc.dim("  " + "─".repeat(text.length + 2)));
+	console.log(pc.dim(`  ${"─".repeat(text.length + 2)}`));
 }
 
 export function label(key: string, value: string): void {
-	console.log(`  ${pc.dim(key + ":")} ${value}`);
+	console.log(`  ${pc.dim(`${key}:`)} ${value}`);
 }
 
 export function success(text: string): void {
@@ -186,9 +184,7 @@ export function fail(text: string): void {
 
 export function step(num: number, text: string): void {
 	console.log();
-	console.log(
-		`  ${pc.bold(pc.yellow(`[${num}]`))} ${pc.bold(text)}`,
-	);
+	console.log(`  ${pc.bold(pc.yellow(`[${num}]`))} ${pc.bold(text)}`);
 }
 
 export function sleep(ms: number): Promise<void> {

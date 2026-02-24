@@ -1,8 +1,4 @@
-import {
-	createAgent,
-	delegate,
-	type DelegationConstraints,
-} from "credat";
+import { createAgent, type DelegationConstraints, delegate } from "credat";
 import pc from "picocolors";
 import {
 	header,
@@ -21,6 +17,7 @@ interface DelegateCommandOptions {
 	scopes: string;
 	maxValue?: string;
 	until?: string;
+	json?: boolean;
 }
 
 export async function delegateCommand(
@@ -36,10 +33,16 @@ export async function delegateCommand(
 			const agent = loadAgentFile();
 			agentDid = agent.did;
 		} catch {
+			if (options.json) {
+				console.log(
+					JSON.stringify({
+						error: "No agent DID provided and no local agent found",
+					}),
+				);
+				return;
+			}
 			console.error(
-				pc.red(
-					"  No agent DID provided and no local agent found.",
-				),
+				pc.red("  No agent DID provided and no local agent found."),
 			);
 			console.error(
 				pc.dim(
@@ -62,7 +65,9 @@ export async function delegateCommand(
 
 	if (ownerExists()) {
 		owner = loadOwnerFile();
-		console.log(pc.dim("  Loaded owner from .credat/owner.json"));
+		if (!options.json) {
+			console.log(pc.dim("  Loaded owner from .credat/owner.json"));
+		}
 	} else {
 		// Create a new owner identity
 		const ownerIdentity = await createAgent({
@@ -74,9 +79,40 @@ export async function delegateCommand(
 			keyPair: ownerIdentity.keyPair,
 		};
 		saveOwner(owner);
-		console.log(
-			pc.dim("  Created new owner identity → .credat/owner.json"),
-		);
+		if (!options.json) {
+			console.log(pc.dim("  Created new owner identity → .credat/owner.json"));
+		}
+	}
+
+	if (options.maxValue !== undefined) {
+		const n = Number(options.maxValue);
+		if (!Number.isFinite(n) || n <= 0) {
+			if (options.json) {
+				console.log(
+					JSON.stringify({
+						error: "--max-value must be a positive number",
+					}),
+				);
+				return;
+			}
+			console.error(pc.red("  --max-value must be a positive number."));
+			process.exit(1);
+		}
+	}
+
+	if (options.until !== undefined) {
+		if (Number.isNaN(Date.parse(options.until))) {
+			if (options.json) {
+				console.log(
+					JSON.stringify({
+						error: "--until must be a valid ISO 8601 date",
+					}),
+				);
+				return;
+			}
+			console.error(pc.red("  --until must be a valid ISO 8601 date."));
+			process.exit(1);
+		}
 	}
 
 	const scopes = options.scopes.split(",").map((s) => s.trim());
@@ -98,6 +134,21 @@ export async function delegateCommand(
 	});
 
 	saveDelegation(delegation);
+
+	if (options.json) {
+		console.log(
+			JSON.stringify({
+				agent: agentDid,
+				owner: owner.did,
+				scopes,
+				constraints:
+					Object.keys(constraints).length > 0 ? constraints : undefined,
+				validUntil: validUntil || null,
+				token: delegation.raw,
+			}),
+		);
+		return;
+	}
 
 	header("Delegation Issued");
 	label("Agent", pc.green(agentDid));

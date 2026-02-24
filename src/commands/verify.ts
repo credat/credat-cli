@@ -1,33 +1,62 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { verifyDelegation } from "credat";
 import pc from "picocolors";
-import { fail, header, label, loadOwnerFile, ownerExists, success } from "../utils.js";
+import {
+	credatDir,
+	fail,
+	header,
+	label,
+	loadOwnerFile,
+	ownerExists,
+	success,
+} from "../utils.js";
 
-interface VerifyCommandOptions {
-	token?: string;
+interface VerifyOptions {
+	json?: boolean;
 }
 
 export async function verifyCommand(
 	token: string | undefined,
-	_options: VerifyCommandOptions,
+	options: VerifyOptions = {},
 ): Promise<void> {
 	if (!token) {
-		console.error(
-			pc.red("  A delegation token is required."),
-		);
-		console.error(
-			pc.dim(`  Usage: ${pc.bold("credat verify <token>")}`),
-		);
-		process.exit(1);
+		const delegationPath = join(credatDir(), "delegation.json");
+		if (existsSync(delegationPath)) {
+			const data = JSON.parse(readFileSync(delegationPath, "utf-8")) as {
+				raw: string;
+			};
+			token = data.raw;
+			if (!options.json) {
+				console.log(pc.dim("  Loaded token from .credat/delegation.json"));
+			}
+		} else {
+			if (options.json) {
+				console.log(
+					JSON.stringify({ valid: false, error: "No delegation token found" }),
+				);
+				return;
+			}
+			console.error(pc.red("  A delegation token is required."));
+			console.error(
+				pc.dim(
+					`  Usage: ${pc.bold("credat verify <token>")} or run ${pc.bold("credat delegate")} first`,
+				),
+			);
+			process.exit(1);
+		}
 	}
 
 	if (!ownerExists()) {
+		if (options.json) {
+			console.log(
+				JSON.stringify({ valid: false, error: "No owner key found" }),
+			);
+			return;
+		}
+		console.error(pc.red("  No owner key found in .credat/owner.json"));
 		console.error(
-			pc.red("  No owner key found in .credat/owner.json"),
-		);
-		console.error(
-			pc.dim(
-				"  Run a delegation first or provide the owner key file.",
-			),
+			pc.dim("  Run a delegation first or provide the owner key file."),
 		);
 		process.exit(1);
 	}
@@ -38,6 +67,22 @@ export async function verifyCommand(
 		ownerPublicKey: owner.keyPair.publicKey,
 		algorithm: owner.keyPair.algorithm,
 	});
+
+	if (options.json) {
+		console.log(
+			JSON.stringify({
+				valid: result.valid,
+				agent: result.agent || null,
+				owner: result.owner || null,
+				scopes: result.scopes,
+				constraints: result.constraints || null,
+				validFrom: result.validFrom || null,
+				validUntil: result.validUntil || null,
+				errors: result.errors.map((e) => e.message),
+			}),
+		);
+		return;
+	}
 
 	header("Verification Result");
 
@@ -52,10 +97,7 @@ export async function verifyCommand(
 	label("Owner", result.owner || pc.dim("(unknown)"));
 
 	if (result.scopes.length > 0) {
-		label(
-			"Scopes",
-			result.scopes.map((s) => pc.yellow(s)).join(", "),
-		);
+		label("Scopes", result.scopes.map((s) => pc.yellow(s)).join(", "));
 	}
 
 	if (result.constraints) {
