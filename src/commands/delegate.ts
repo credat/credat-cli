@@ -144,7 +144,7 @@ export async function delegateCommand(
 				constraints:
 					Object.keys(constraints).length > 0 ? constraints : undefined,
 				validUntil: validUntil || null,
-				token: delegation.raw,
+				token: delegation.token,
 			}),
 		);
 		return;
@@ -163,7 +163,7 @@ export async function delegateCommand(
 	}
 
 	console.log();
-	label("Token", pc.dim(truncate(delegation.raw, 80)));
+	label("Token", pc.dim(truncate(delegation.token, 80)));
 	label("Saved to", pc.dim(".credat/delegation.json"));
 	console.log();
 	success("Delegation credential created");

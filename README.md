@@ -4,6 +4,10 @@ CLI for **Credat** — agent identity and delegation from the terminal.
 
 Create decentralized identities (DIDs), issue delegation credentials, and verify trust chains — all without writing code.
 
+<p align="center">
+  <img src="assets/help.png" alt="credat CLI" width="680" />
+</p>
+
 ## Install
 
 ```bash
@@ -24,6 +28,14 @@ credat delegate --scopes payments:read,invoices:create --until 2026-12-31
 # 3. Verify the delegation
 credat verify
 ```
+
+## Demo
+
+Run `credat demo` to see the full trust flow in action — identity creation, delegation, verification, and challenge-response handshake:
+
+<p align="center">
+  <img src="assets/demo.png" alt="credat demo" width="680" />
+</p>
 
 ## Commands
 
@@ -106,7 +118,7 @@ Credat uses **Verifiable Credentials** and **Decentralized Identifiers** (DIDs) 
 
 ## Links
 
-- [credat SDK](https://github.com/nicmusic/credat) — core library
+- [credat SDK](https://github.com/credat/credat) — core library
 - [DID specification](https://www.w3.org/TR/did-core/)
 - [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)
 

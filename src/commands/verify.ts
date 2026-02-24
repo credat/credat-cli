@@ -24,9 +24,9 @@ export async function verifyCommand(
 		const delegationPath = join(credatDir(), "delegation.json");
 		if (existsSync(delegationPath)) {
 			const data = JSON.parse(readFileSync(delegationPath, "utf-8")) as {
-				raw: string;
+				token: string;
 			};
-			token = data.raw;
+			token = data.token;
 			if (!options.json) {
 				console.log(pc.dim("  Loaded token from .credat/delegation.json"));
 			}

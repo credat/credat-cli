@@ -150,7 +150,7 @@ export function ownerExists(): boolean {
 
 // ── Delegation file I/O ──
 
-export function saveDelegation(data: { raw: string; claims: unknown }): void {
+export function saveDelegation(data: { token: string; claims: unknown }): void {
 	ensureDir();
 	const filePath = join(credatDir(), "delegation.json");
 	writeFileSync(filePath, JSON.stringify(data, null, "\t"));

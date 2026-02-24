@@ -76,14 +76,14 @@ export async function demoCommand(): Promise<void> {
 	label("Max Value", pc.magenta("$1,000"));
 	label("Domains", constraints.allowedDomains.join(", "));
 	label("Expires", validUntil);
-	label("Token", pc.dim(truncate(delegation.raw, 60)));
+	label("Token", pc.dim(truncate(delegation.token, 60)));
 	success("Delegation VC issued");
 
 	// ── Step 4: Verify delegation ──
 	step(4, "Verify Delegation (standalone)");
 	await sleep(300);
 
-	const verifyResult = await verifyDelegation(delegation.raw, {
+	const verifyResult = await verifyDelegation(delegation.token, {
 		ownerPublicKey: owner.keyPair.publicKey,
 	});
 
@@ -112,7 +112,7 @@ export async function demoCommand(): Promise<void> {
 
 	const presentation = await presentCredentials({
 		challenge,
-		delegation: delegation.raw,
+		delegation: delegation.token,
 		agent,
 	});
 

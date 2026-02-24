@@ -46,7 +46,7 @@ describe("verify command", () => {
 		mkdirSync(dir, { recursive: true });
 		writeFileSync(
 			join(dir, "delegation.json"),
-			JSON.stringify({ raw: "test-token", claims: {} }),
+			JSON.stringify({ token: "test-token", claims: {} }),
 		);
 
 		const { verifyCommand } = await import("./verify.js");

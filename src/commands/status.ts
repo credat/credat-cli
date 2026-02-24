@@ -12,7 +12,7 @@ import {
 } from "../utils.js";
 
 interface DelegationFile {
-	raw: string;
+	token: string;
 	claims: {
 		sub?: string;
 		iss?: string;
