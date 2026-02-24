@@ -1,0 +1,42 @@
+{
+	"name": "@credat/cli",
+	"version": "0.1.0-alpha.1",
+	"description": "CLI for Credat — agent identity and delegation from the terminal",
+	"type": "module",
+	"bin": {
+		"credat": "./dist/index.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"lint": "biome check src/",
+		"lint:fix": "biome check --write src/"
+	},
+	"keywords": [
+		"credat",
+		"agent",
+		"identity",
+		"delegation",
+		"did",
+		"cli"
+	],
+	"author": "Maxime Mansiet",
+	"license": "Apache-2.0",
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"dependencies": {
+		"commander": "^13.1.0",
+		"credat": "file:../credat",
+		"picocolors": "^1.1.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.0",
+		"@types/node": "^25.2.3",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3"
+	}
+}
