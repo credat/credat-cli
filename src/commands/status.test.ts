@@ -1,35 +1,17 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { collectLogs, useTestDir } from "../test-utils.js";
 import { credatDir } from "../utils.js";
 
 describe("status command — pretty output", () => {
-	const testDir = join(process.cwd(), ".credat-status-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("status-test");
 
 	it("shows 'No agent' when no agent.json exists", async () => {
 		const { statusCommand } = await import("./status.js");
 		statusCommand();
 
-		const logs = (console.log as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0])
-			.join("\n");
-
-		expect(logs).toContain("No agent");
+		expect(collectLogs()).toContain("No agent");
 	});
 
 	it("shows agent info when agent.json exists", async () => {
@@ -53,10 +35,7 @@ describe("status command — pretty output", () => {
 		const { statusCommand } = await import("./status.js");
 		statusCommand();
 
-		const logs = (console.log as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0])
-			.join("\n");
-
+		const logs = collectLogs();
 		expect(logs).toContain("did:web:test.example");
 		expect(logs).toContain("ES256");
 		expect(logs).toContain("test.example");
@@ -84,10 +63,7 @@ describe("status command — pretty output", () => {
 		const { statusCommand } = await import("./status.js");
 		statusCommand();
 
-		const logs = (console.log as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0])
-			.join("\n");
-
+		const logs = collectLogs();
 		expect(logs).toContain("payments:read");
 		expect(logs).toContain("1000");
 		expect(logs).toContain("2099-12-31T00:00:00.000Z");
@@ -97,22 +73,7 @@ describe("status command — pretty output", () => {
 });
 
 describe("status command — JSON output", () => {
-	const testDir = join(process.cwd(), ".credat-status-json-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("status-json-test");
 
 	it("outputs full state as JSON", async () => {
 		const dir = credatDir();
@@ -161,7 +122,8 @@ describe("status command — JSON output", () => {
 		const { statusCommand } = await import("./status.js");
 		statusCommand({ json: true });
 
-		const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+		const output = (console.log as ReturnType<typeof vi.fn>).mock
+			.calls[0]?.[0] as string;
 		const parsed = JSON.parse(output);
 
 		expect(parsed.agent).toEqual({
@@ -186,7 +148,8 @@ describe("status command — JSON output", () => {
 		const { statusCommand } = await import("./status.js");
 		statusCommand({ json: true });
 
-		const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+		const output = (console.log as ReturnType<typeof vi.fn>).mock
+			.calls[0]?.[0] as string;
 		const parsed = JSON.parse(output);
 
 		expect(parsed.agent).toBeNull();
@@ -214,7 +177,8 @@ describe("status command — JSON output", () => {
 		const { statusCommand } = await import("./status.js");
 		statusCommand({ json: true });
 
-		const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+		const output = (console.log as ReturnType<typeof vi.fn>).mock
+			.calls[0]?.[0] as string;
 		const parsed = JSON.parse(output);
 
 		expect(parsed.delegation.expired).toBe(true);

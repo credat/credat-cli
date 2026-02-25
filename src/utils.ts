@@ -135,11 +135,37 @@ export function ownerExists(): boolean {
 
 // ── Delegation file I/O ──
 
+export interface DelegationFile {
+	token: string;
+	claims: {
+		agent: string;
+		owner: string;
+		scopes: string[];
+		constraints?: Record<string, unknown>;
+		validFrom?: string;
+		validUntil?: string;
+	};
+}
+
 export function saveDelegation(data: { token: string; claims: unknown }): void {
 	ensureDir();
 	const filePath = join(credatDir(), "delegation.json");
 	writeFileSync(filePath, JSON.stringify(data, null, "\t"));
 	chmodSync(filePath, 0o600);
+}
+
+export function delegationExists(): boolean {
+	return existsSync(join(credatDir(), "delegation.json"));
+}
+
+export function loadDelegationFile(): DelegationFile {
+	const path = join(credatDir(), "delegation.json");
+	if (!existsSync(path)) {
+		throw new Error(
+			`No delegation found. Run ${pc.bold("credat delegate")} first.`,
+		);
+	}
+	return JSON.parse(readFileSync(path, "utf-8")) as DelegationFile;
 }
 
 // ── Formatting helpers ──

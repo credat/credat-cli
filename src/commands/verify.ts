@@ -1,12 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { verifyDelegation } from "credat";
 import pc from "picocolors";
 import {
-	credatDir,
+	delegationExists,
 	fail,
 	header,
 	label,
+	loadDelegationFile,
 	loadOwnerFile,
 	ownerExists,
 	success,
@@ -21,11 +20,8 @@ export async function verifyCommand(
 	options: VerifyOptions = {},
 ): Promise<void> {
 	if (!token) {
-		const delegationPath = join(credatDir(), "delegation.json");
-		if (existsSync(delegationPath)) {
-			const data = JSON.parse(readFileSync(delegationPath, "utf-8")) as {
-				token: string;
-			};
+		if (delegationExists()) {
+			const data = loadDelegationFile();
 			token = data.token;
 			if (!options.json) {
 				console.log(pc.dim("  Loaded token from .credat/delegation.json"));

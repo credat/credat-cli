@@ -1,25 +1,14 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createAgent } from "credat";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { ExitError, collectLogs, useTestDir } from "../test-utils.js";
 import { credatDir, saveAgent } from "../utils.js";
 
-class ExitError extends Error {
-	code: number;
-	constructor(code: number) {
-		super(`process.exit(${code})`);
-		this.code = code;
-	}
-}
-
 describe("delegate command validation", () => {
-	const testDir = join(process.cwd(), ".credat-delegate-test");
-	const originalCwd = process.cwd();
+	useTestDir("delegate-test", { mockExit: true });
 
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
+	it("rejects non-numeric max-value", async () => {
 		saveAgent({
 			did: "did:web:test.example",
 			domain: "test.example",
@@ -31,20 +20,6 @@ describe("delegate command validation", () => {
 			didDocument: { id: "did:web:test.example" },
 		});
 
-		vi.spyOn(process, "exit").mockImplementation((code) => {
-			throw new ExitError(code as number);
-		});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.spyOn(console, "log").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
-
-	it("rejects non-numeric max-value", async () => {
 		const { delegateCommand } = await import("./delegate.js");
 		await expect(
 			delegateCommand({ scopes: "payments:read", maxValue: "abc" }),
@@ -56,6 +31,17 @@ describe("delegate command validation", () => {
 	});
 
 	it("rejects zero max-value", async () => {
+		saveAgent({
+			did: "did:web:test.example",
+			domain: "test.example",
+			keyPair: {
+				algorithm: "ES256" as const,
+				publicKey: new Uint8Array([1, 2, 3]),
+				privateKey: new Uint8Array([4, 5, 6]),
+			},
+			didDocument: { id: "did:web:test.example" },
+		});
+
 		const { delegateCommand } = await import("./delegate.js");
 		await expect(
 			delegateCommand({ scopes: "payments:read", maxValue: "0" }),
@@ -63,6 +49,17 @@ describe("delegate command validation", () => {
 	});
 
 	it("rejects negative max-value", async () => {
+		saveAgent({
+			did: "did:web:test.example",
+			domain: "test.example",
+			keyPair: {
+				algorithm: "ES256" as const,
+				publicKey: new Uint8Array([1, 2, 3]),
+				privateKey: new Uint8Array([4, 5, 6]),
+			},
+			didDocument: { id: "did:web:test.example" },
+		});
+
 		const { delegateCommand } = await import("./delegate.js");
 		await expect(
 			delegateCommand({ scopes: "payments:read", maxValue: "-5" }),
@@ -70,6 +67,17 @@ describe("delegate command validation", () => {
 	});
 
 	it("rejects invalid ISO date for --until", async () => {
+		saveAgent({
+			did: "did:web:test.example",
+			domain: "test.example",
+			keyPair: {
+				algorithm: "ES256" as const,
+				publicKey: new Uint8Array([1, 2, 3]),
+				privateKey: new Uint8Array([4, 5, 6]),
+			},
+			didDocument: { id: "did:web:test.example" },
+		});
+
 		const { delegateCommand } = await import("./delegate.js");
 		await expect(
 			delegateCommand({ scopes: "payments:read", until: "not-a-date" }),
@@ -82,22 +90,7 @@ describe("delegate command validation", () => {
 });
 
 describe("delegate command happy path", () => {
-	const testDir = join(process.cwd(), ".credat-delegate-happy-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("delegate-happy-test");
 
 	it("creates delegation with real SDK and saves delegation.json", async () => {
 		const agent = await createAgent({
@@ -157,14 +150,11 @@ describe("delegate command happy path", () => {
 			json: true,
 		});
 
-		const logCalls = (console.log as ReturnType<typeof vi.fn>).mock.calls;
-		// Find the JSON output call (the one that parses as valid JSON)
-		const jsonCall = logCalls.find(
-			(c) => typeof c[0] === "string" && c[0].startsWith("{"),
-		);
-		expect(jsonCall).toBeDefined();
+		const logs = collectLogs();
+		const jsonLine = logs.split("\n").find((l) => l.startsWith("{"));
+		expect(jsonLine).toBeDefined();
 
-		const parsed = JSON.parse(jsonCall![0]);
+		const parsed = JSON.parse(jsonLine!);
 		expect(parsed.agent).toBe(agent.did);
 		expect(parsed.owner).toMatch(/^did:web:/);
 		expect(parsed.scopes).toEqual(["payments:read"]);

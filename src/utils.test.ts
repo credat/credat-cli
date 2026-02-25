@@ -1,10 +1,13 @@
-import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
+import { useTestDir } from "./test-utils.js";
 import {
 	credatDir,
+	delegationExists,
 	deserializeKeyPair,
 	loadAgentFile,
+	loadDelegationFile,
 	loadOwnerFile,
 	saveAgent,
 	saveDelegation,
@@ -61,25 +64,14 @@ describe("serializeKeyPair / deserializeKeyPair roundtrip", () => {
 });
 
 describe("file permissions", () => {
-	const testDir = join(process.cwd(), ".credat-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-	});
+	useTestDir("perm-test");
 
 	it("saveAgent creates files with 0o600 permissions", () => {
 		saveAgent({
 			did: "did:web:test.example",
 			domain: "test.example",
 			keyPair: {
-				algorithm: "ES256",
+				algorithm: "ES256" as const,
 				publicKey: new Uint8Array([1, 2, 3]),
 				privateKey: new Uint8Array([4, 5, 6]),
 			},
@@ -98,7 +90,7 @@ describe("file permissions", () => {
 			did: "did:web:test.example",
 			domain: "test.example",
 			keyPair: {
-				algorithm: "ES256",
+				algorithm: "ES256" as const,
 				publicKey: new Uint8Array([1, 2, 3]),
 				privateKey: new Uint8Array([4, 5, 6]),
 			},
@@ -139,18 +131,7 @@ describe("file permissions", () => {
 });
 
 describe("owner file I/O", () => {
-	const testDir = join(process.cwd(), ".credat-owner-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-	});
+	useTestDir("owner-test");
 
 	it("saveOwner + loadOwnerFile roundtrip preserves data", () => {
 		const original = {
@@ -179,7 +160,7 @@ describe("owner file I/O", () => {
 		saveOwner({
 			did: "did:web:owner.test",
 			keyPair: {
-				algorithm: "ES256",
+				algorithm: "ES256" as const,
 				publicKey: new Uint8Array([1]),
 				privateKey: new Uint8Array([2]),
 			},
@@ -191,19 +172,8 @@ describe("owner file I/O", () => {
 	});
 });
 
-describe("saveDelegation", () => {
-	const testDir = join(process.cwd(), ".credat-delegation-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-	});
+describe("delegation file I/O", () => {
+	useTestDir("delegation-test");
 
 	it("creates delegation.json with 0o600 permissions", () => {
 		saveDelegation({
@@ -220,6 +190,51 @@ describe("saveDelegation", () => {
 
 		const stat = statSync(delegationPath);
 		expect(stat.mode & 0o777).toBe(0o600);
+	});
+
+	it("delegationExists returns false when no delegation", () => {
+		expect(delegationExists()).toBe(false);
+	});
+
+	it("delegationExists returns true after saving", () => {
+		saveDelegation({
+			token: "test-token",
+			claims: {
+				agent: "did:web:test.example",
+				owner: "did:web:owner.local",
+				scopes: ["payments:read"],
+			},
+		});
+		expect(delegationExists()).toBe(true);
+	});
+
+	it("loadDelegationFile throws when no delegation exists", () => {
+		expect(() => loadDelegationFile()).toThrow("No delegation found");
+	});
+
+	it("saveDelegation + loadDelegationFile roundtrip preserves data", () => {
+		const original = {
+			token: "test-token-123",
+			claims: {
+				agent: "did:web:test.example",
+				owner: "did:web:owner.local",
+				scopes: ["payments:read", "invoices:create"],
+				constraints: { maxTransactionValue: 5000 },
+				validUntil: "2099-12-31T00:00:00.000Z",
+				validFrom: "2024-01-01T00:00:00.000Z",
+			},
+		};
+
+		saveDelegation(original);
+		const loaded = loadDelegationFile();
+
+		expect(loaded.token).toBe(original.token);
+		expect(loaded.claims.agent).toBe(original.claims.agent);
+		expect(loaded.claims.owner).toBe(original.claims.owner);
+		expect(loaded.claims.scopes).toEqual(original.claims.scopes);
+		expect(loaded.claims.constraints).toEqual(original.claims.constraints);
+		expect(loaded.claims.validUntil).toBe(original.claims.validUntil);
+		expect(loaded.claims.validFrom).toBe(original.claims.validFrom);
 	});
 });
 

@@ -1,42 +1,11 @@
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { ExitError, collectLogs, useTestDir } from "../test-utils.js";
 import { credatDir } from "../utils.js";
 
-class ExitError extends Error {
-	code: number;
-	constructor(code: number) {
-		super(`process.exit(${code})`);
-		this.code = code;
-	}
-}
-
 describe("init command --force guard", () => {
-	const testDir = join(process.cwd(), ".credat-init-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(process, "exit").mockImplementation((code) => {
-			throw new ExitError(code as number);
-		});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.spyOn(console, "log").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("init-test", { mockExit: true });
 
 	it("exits when agent.json exists and --force is not set", async () => {
 		const dir = credatDir();
@@ -66,22 +35,7 @@ describe("init command --force guard", () => {
 });
 
 describe("init command happy path", () => {
-	const testDir = join(process.cwd(), ".credat-init-happy-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("init-happy-test");
 
 	it("creates agent.json with correct DID format", async () => {
 		const { initCommand } = await import("./init.js");
@@ -114,21 +68,17 @@ describe("init command happy path", () => {
 		const { initCommand } = await import("./init.js");
 		await initCommand({ domain: "test.example" });
 
-		const logs = (console.log as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0])
-			.join("\n");
-
-		expect(logs).toContain("https://test.example/.well-known/did.json");
+		expect(collectLogs()).toContain(
+			"https://test.example/.well-known/did.json",
+		);
 	});
 
 	it("outputs path-based URL when path is provided", async () => {
 		const { initCommand } = await import("./init.js");
 		await initCommand({ domain: "test.example", path: "agents/bot" });
 
-		const logs = (console.log as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0])
-			.join("\n");
-
-		expect(logs).toContain("https://test.example/agents/bot/did.json");
+		expect(collectLogs()).toContain(
+			"https://test.example/agents/bot/did.json",
+		);
 	});
 });

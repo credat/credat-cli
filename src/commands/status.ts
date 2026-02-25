@@ -3,25 +3,15 @@ import { join } from "node:path";
 import pc from "picocolors";
 import {
 	credatDir,
+	delegationExists,
 	fail,
 	header,
 	label,
+	loadDelegationFile,
 	type SerializedAgent,
 	type SerializedOwner,
 	success,
 } from "../utils.js";
-
-interface DelegationFile {
-	token: string;
-	claims: {
-		agent: string;
-		owner: string;
-		scopes: string[];
-		constraints?: Record<string, unknown>;
-		validFrom?: string;
-		validUntil?: string;
-	};
-}
 
 interface StatusOptions {
 	json?: boolean;
@@ -40,10 +30,7 @@ export function statusCommand(options: StatusOptions = {}): void {
 		? (JSON.parse(readFileSync(ownerPath, "utf-8")) as SerializedOwner)
 		: null;
 
-	const delegationPath = join(dir, "delegation.json");
-	const delegation = existsSync(delegationPath)
-		? (JSON.parse(readFileSync(delegationPath, "utf-8")) as DelegationFile)
-		: null;
+	const delegation = delegationExists() ? loadDelegationFile() : null;
 
 	if (options.json) {
 		const validUntil = delegation?.claims.validUntil;

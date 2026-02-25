@@ -1,37 +1,12 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createAgent, delegate } from "credat";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { ExitError, collectLogs, useTestDir } from "../test-utils.js";
 import { credatDir, saveAgent, saveOwner } from "../utils.js";
 
-class ExitError extends Error {
-	code: number;
-	constructor(code: number) {
-		super(`process.exit(${code})`);
-		this.code = code;
-	}
-}
-
 describe("verify command", () => {
-	const testDir = join(process.cwd(), ".credat-verify-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(process, "exit").mockImplementation((code) => {
-			throw new ExitError(code as number);
-		});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.spyOn(console, "log").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("verify-test", { mockExit: true });
 
 	it("exits with error when no token and no delegation.json", async () => {
 		const { verifyCommand } = await import("./verify.js");
@@ -47,14 +22,19 @@ describe("verify command", () => {
 		mkdirSync(dir, { recursive: true });
 		writeFileSync(
 			join(dir, "delegation.json"),
-			JSON.stringify({ token: "test-token", claims: {} }),
+			JSON.stringify({
+				token: "test-token",
+				claims: {
+					agent: "did:web:test.example",
+					owner: "did:web:owner.local",
+					scopes: [],
+				},
+			}),
 		);
 
 		const { verifyCommand } = await import("./verify.js");
 		await expect(verifyCommand(undefined)).rejects.toThrow(ExitError);
 
-		// Should have loaded the token (no "token is required" error)
-		// but failed because no owner
 		expect(console.error).toHaveBeenCalledWith(
 			expect.stringContaining("No owner key found"),
 		);
@@ -62,22 +42,7 @@ describe("verify command", () => {
 });
 
 describe("verify command happy path", () => {
-	const testDir = join(process.cwd(), ".credat-verify-happy-test");
-	const originalCwd = process.cwd();
-
-	beforeEach(() => {
-		mkdirSync(testDir, { recursive: true });
-		process.chdir(testDir);
-
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "error").mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(testDir, { recursive: true, force: true });
-		vi.restoreAllMocks();
-	});
+	useTestDir("verify-happy-test");
 
 	it("verifies a valid delegation", async () => {
 		const agent = await createAgent({
@@ -102,10 +67,7 @@ describe("verify command happy path", () => {
 		const { verifyCommand } = await import("./verify.js");
 		await verifyCommand(delegation.token);
 
-		const logs = (console.log as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0])
-			.join("\n");
-
+		const logs = collectLogs();
 		expect(logs).toContain("Valid delegation");
 		expect(logs).toContain(agent.did);
 		expect(logs).toContain(owner.did);
@@ -135,13 +97,11 @@ describe("verify command happy path", () => {
 		const { verifyCommand } = await import("./verify.js");
 		await verifyCommand(delegation.token, { json: true });
 
-		const logCalls = (console.log as ReturnType<typeof vi.fn>).mock.calls;
-		const jsonCall = logCalls.find(
-			(c) => typeof c[0] === "string" && c[0].startsWith("{"),
-		);
-		expect(jsonCall).toBeDefined();
+		const logs = collectLogs();
+		const jsonLine = logs.split("\n").find((l) => l.startsWith("{"));
+		expect(jsonLine).toBeDefined();
 
-		const parsed = JSON.parse(jsonCall![0]);
+		const parsed = JSON.parse(jsonLine!);
 		expect(parsed.valid).toBe(true);
 		expect(parsed.agent).toBe(agent.did);
 		expect(parsed.owner).toBe(owner.did);
@@ -160,13 +120,11 @@ describe("verify command happy path", () => {
 		const { verifyCommand } = await import("./verify.js");
 		await verifyCommand("invalid-token", { json: true });
 
-		const logCalls = (console.log as ReturnType<typeof vi.fn>).mock.calls;
-		const jsonCall = logCalls.find(
-			(c) => typeof c[0] === "string" && c[0].startsWith("{"),
-		);
-		expect(jsonCall).toBeDefined();
+		const logs = collectLogs();
+		const jsonLine = logs.split("\n").find((l) => l.startsWith("{"));
+		expect(jsonLine).toBeDefined();
 
-		const parsed = JSON.parse(jsonCall![0]);
+		const parsed = JSON.parse(jsonLine!);
 		expect(parsed.valid).toBe(false);
 		expect(parsed.errors.length).toBeGreaterThan(0);
 	});
