@@ -11,43 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout CLI
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: credat-cli
-
-      # Required while SDK uses file:../credat — remove when published to npm
-      - name: Checkout SDK
-        uses: actions/checkout@v4
-        with:
-          repository: credat/credat
-          path: credat
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install SDK dependencies
-        working-directory: credat
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build SDK
-        working-directory: credat
-        run: npm run build
-
-      - name: Install CLI dependencies
-        working-directory: credat-cli
-        run: npm install
-
       - name: Lint
-        working-directory: credat-cli
         run: npm run lint
 
-      - name: Build
-        working-directory: credat-cli
-        run: npm run build
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
-        working-directory: credat-cli
         run: npm test
+
+      - name: Build
+        run: npm run build

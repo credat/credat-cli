@@ -14,12 +14,12 @@ import {
 interface DelegationFile {
 	token: string;
 	claims: {
-		sub?: string;
-		iss?: string;
-		scope?: string;
-		exp?: number;
-		nbf?: number;
+		agent: string;
+		owner: string;
+		scopes: string[];
 		constraints?: Record<string, unknown>;
+		validFrom?: string;
+		validUntil?: string;
 	};
 }
 
@@ -46,17 +46,8 @@ export function statusCommand(options: StatusOptions = {}): void {
 		: null;
 
 	if (options.json) {
-		const scopes = delegation?.claims.scope
-			? delegation.claims.scope.split(" ")
-			: undefined;
-
-		let expires: string | undefined;
-		let expired: boolean | undefined;
-		if (delegation?.claims.exp) {
-			const expiry = new Date(delegation.claims.exp * 1000);
-			expires = expiry.toISOString();
-			expired = expiry < new Date();
-		}
+		const validUntil = delegation?.claims.validUntil;
+		const expired = validUntil ? new Date(validUntil) < new Date() : undefined;
 
 		console.log(
 			JSON.stringify({
@@ -71,13 +62,11 @@ export function statusCommand(options: StatusOptions = {}): void {
 				owner: owner ? { did: owner.did } : null,
 				delegation: delegation
 					? {
-							scopes,
+							scopes: delegation.claims.scopes,
 							constraints: delegation.claims.constraints,
-							expires,
+							expires: validUntil ?? undefined,
 							expired,
-							validFrom: delegation.claims.nbf
-								? new Date(delegation.claims.nbf * 1000).toISOString()
-								: undefined,
+							validFrom: delegation.claims.validFrom,
 						}
 					: null,
 			}),
@@ -111,9 +100,8 @@ export function statusCommand(options: StatusOptions = {}): void {
 	if (delegation) {
 		const claims = delegation.claims;
 
-		if (claims.scope) {
-			const scopes = claims.scope.split(" ");
-			label("Scopes", scopes.map((s) => pc.yellow(s)).join(", "));
+		if (claims.scopes.length > 0) {
+			label("Scopes", claims.scopes.map((s) => pc.yellow(s)).join(", "));
 		}
 
 		if (claims.constraints) {
@@ -126,8 +114,8 @@ export function statusCommand(options: StatusOptions = {}): void {
 			}
 		}
 
-		if (claims.exp) {
-			const expiry = new Date(claims.exp * 1000);
+		if (claims.validUntil) {
+			const expiry = new Date(claims.validUntil);
 			const expired = expiry < new Date();
 			label(
 				"Expires",
@@ -137,8 +125,8 @@ export function statusCommand(options: StatusOptions = {}): void {
 			);
 		}
 
-		if (claims.nbf) {
-			label("Valid From", new Date(claims.nbf * 1000).toISOString());
+		if (claims.validFrom) {
+			label("Valid From", claims.validFrom);
 		}
 
 		success("Delegation loaded");

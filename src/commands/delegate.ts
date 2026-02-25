@@ -1,4 +1,9 @@
-import { createAgent, type DelegationConstraints, delegate } from "credat";
+import {
+	createAgent,
+	type DelegationConstraints,
+	delegate,
+	type KeyPair,
+} from "credat";
 import pc from "picocolors";
 import {
 	header,
@@ -56,11 +61,7 @@ export async function delegateCommand(
 	// Resolve or create owner
 	let owner: {
 		did: string;
-		keyPair: {
-			algorithm: string;
-			publicKey: Uint8Array;
-			privateKey: Uint8Array;
-		};
+		keyPair: KeyPair;
 	};
 
 	if (ownerExists()) {

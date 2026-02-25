@@ -65,19 +65,18 @@ export async function verifyCommand(
 
 	const result = await verifyDelegation(token, {
 		ownerPublicKey: owner.keyPair.publicKey,
-		algorithm: owner.keyPair.algorithm,
 	});
 
 	if (options.json) {
 		console.log(
 			JSON.stringify({
 				valid: result.valid,
-				agent: result.agent || null,
-				owner: result.owner || null,
-				scopes: result.scopes,
-				constraints: result.constraints || null,
-				validFrom: result.validFrom || null,
-				validUntil: result.validUntil || null,
+				agent: result.agent ?? null,
+				owner: result.owner ?? null,
+				scopes: result.scopes ?? [],
+				constraints: result.constraints ?? null,
+				validFrom: result.validFrom ?? null,
+				validUntil: result.validUntil ?? null,
 				errors: result.errors.map((e) => e.message),
 			}),
 		);
@@ -93,11 +92,12 @@ export async function verifyCommand(
 	}
 
 	console.log();
-	label("Agent", result.agent || pc.dim("(unknown)"));
-	label("Owner", result.owner || pc.dim("(unknown)"));
+	label("Agent", result.agent ?? pc.dim("(unknown)"));
+	label("Owner", result.owner ?? pc.dim("(unknown)"));
 
-	if (result.scopes.length > 0) {
-		label("Scopes", result.scopes.map((s) => pc.yellow(s)).join(", "));
+	const scopes = result.scopes ?? [];
+	if (scopes.length > 0) {
+		label("Scopes", scopes.map((s) => pc.yellow(s)).join(", "));
 	}
 
 	if (result.constraints) {

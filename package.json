@@ -14,7 +14,16 @@
 		"dev": "tsup --watch",
 		"lint": "biome check src/",
 		"lint:fix": "biome check --write src/",
+		"typecheck": "tsc --noEmit",
 		"test": "vitest run"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/credat/credat-cli.git"
+	},
+	"homepage": "https://github.com/credat/credat-cli#readme",
+	"bugs": {
+		"url": "https://github.com/credat/credat-cli/issues"
 	},
 	"keywords": [
 		"credat",
@@ -22,6 +31,7 @@
 		"identity",
 		"delegation",
 		"did",
+		"verifiable-credentials",
 		"cli"
 	],
 	"author": "Maxime Mansiet",
@@ -31,7 +41,7 @@
 	},
 	"dependencies": {
 		"commander": "^13.1.0",
-		"credat": "file:../credat",
+		"credat": "^0.2.1-alpha.1",
 		"picocolors": "^1.1.1"
 	},
 	"devDependencies": {

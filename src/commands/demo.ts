@@ -89,11 +89,15 @@ export async function demoCommand(): Promise<void> {
 
 	if (verifyResult.valid) {
 		success(`Valid: ${pc.green("true")}`);
+		label("Agent (from VC)", verifyResult.agent);
+		label("Scopes (from VC)", verifyResult.scopes.join(", "));
 	} else {
 		fail(`Valid: ${pc.red("false")}`);
+		for (const err of verifyResult.errors) {
+			console.log(`    ${pc.red("•")} ${err.message}`);
+		}
+		return;
 	}
-	label("Agent (from VC)", verifyResult.agent);
-	label("Scopes (from VC)", verifyResult.scopes.join(", "));
 
 	// ── Step 5: Handshake ──
 	step(5, "Service Challenges Agent (Handshake)");

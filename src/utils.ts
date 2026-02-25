@@ -6,7 +6,12 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { base64urlToUint8Array, uint8ArrayToBase64url } from "credat";
+import {
+	type Algorithm,
+	base64urlToUint8Array,
+	type KeyPair,
+	uint8ArrayToBase64url,
+} from "credat";
 import pc from "picocolors";
 
 const CREDAT_DIR = ".credat";
@@ -30,11 +35,7 @@ interface SerializedKeyPair {
 	privateKey: string;
 }
 
-export function serializeKeyPair(kp: {
-	algorithm: string;
-	publicKey: Uint8Array;
-	privateKey: Uint8Array;
-}): SerializedKeyPair {
+export function serializeKeyPair(kp: KeyPair): SerializedKeyPair {
 	return {
 		algorithm: kp.algorithm,
 		publicKey: uint8ArrayToBase64url(kp.publicKey),
@@ -42,13 +43,9 @@ export function serializeKeyPair(kp: {
 	};
 }
 
-export function deserializeKeyPair(kp: SerializedKeyPair): {
-	algorithm: string;
-	publicKey: Uint8Array;
-	privateKey: Uint8Array;
-} {
+export function deserializeKeyPair(kp: SerializedKeyPair): KeyPair {
 	return {
-		algorithm: kp.algorithm,
+		algorithm: kp.algorithm as Algorithm,
 		publicKey: base64urlToUint8Array(kp.publicKey),
 		privateKey: base64urlToUint8Array(kp.privateKey),
 	};
@@ -67,16 +64,15 @@ export interface SerializedAgent {
 
 export function saveAgent(agent: {
 	did: string;
-	algorithm: string;
 	domain: string;
 	path?: string;
-	keyPair: { algorithm: string; publicKey: Uint8Array; privateKey: Uint8Array };
+	keyPair: KeyPair;
 	didDocument: unknown;
 }): void {
 	ensureDir();
 	const data: SerializedAgent = {
 		did: agent.did,
-		algorithm: agent.algorithm,
+		algorithm: agent.keyPair.algorithm,
 		domain: agent.domain,
 		path: agent.path,
 		keyPair: serializeKeyPair(agent.keyPair),
@@ -87,12 +83,8 @@ export function saveAgent(agent: {
 	chmodSync(filePath, 0o600);
 }
 
-export function loadAgentFile(): SerializedAgent & {
-	keyPair: {
-		algorithm: string;
-		publicKey: Uint8Array;
-		privateKey: Uint8Array;
-	};
+export function loadAgentFile(): Omit<SerializedAgent, "keyPair"> & {
+	keyPair: KeyPair;
 } {
 	const path = join(credatDir(), "agent.json");
 	if (!existsSync(path)) {
@@ -112,10 +104,7 @@ export interface SerializedOwner {
 	keyPair: SerializedKeyPair;
 }
 
-export function saveOwner(owner: {
-	did: string;
-	keyPair: { algorithm: string; publicKey: Uint8Array; privateKey: Uint8Array };
-}): void {
+export function saveOwner(owner: { did: string; keyPair: KeyPair }): void {
 	ensureDir();
 	const data: SerializedOwner = {
 		did: owner.did,
@@ -126,12 +115,8 @@ export function saveOwner(owner: {
 	chmodSync(filePath, 0o600);
 }
 
-export function loadOwnerFile(): SerializedOwner & {
-	keyPair: {
-		algorithm: string;
-		publicKey: Uint8Array;
-		privateKey: Uint8Array;
-	};
+export function loadOwnerFile(): Omit<SerializedOwner, "keyPair"> & {
+	keyPair: KeyPair;
 } {
 	const path = join(credatDir(), "owner.json");
 	if (!existsSync(path)) {

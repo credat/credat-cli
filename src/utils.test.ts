@@ -5,14 +5,18 @@ import {
 	credatDir,
 	deserializeKeyPair,
 	loadAgentFile,
+	loadOwnerFile,
 	saveAgent,
+	saveDelegation,
+	saveOwner,
 	serializeKeyPair,
+	truncate,
 } from "./utils.js";
 
 describe("serializeKeyPair / deserializeKeyPair roundtrip", () => {
 	it("preserves algorithm and key bytes through roundtrip", () => {
 		const original = {
-			algorithm: "ES256",
+			algorithm: "ES256" as const,
 			publicKey: new Uint8Array([1, 2, 3, 4, 5]),
 			privateKey: new Uint8Array([10, 20, 30, 40, 50]),
 		};
@@ -30,7 +34,7 @@ describe("serializeKeyPair / deserializeKeyPair roundtrip", () => {
 
 	it("handles empty Uint8Arrays", () => {
 		const original = {
-			algorithm: "EdDSA",
+			algorithm: "EdDSA" as const,
 			publicKey: new Uint8Array([]),
 			privateKey: new Uint8Array([]),
 		};
@@ -45,7 +49,7 @@ describe("serializeKeyPair / deserializeKeyPair roundtrip", () => {
 		for (let i = 0; i < 256; i++) large[i] = i;
 
 		const original = {
-			algorithm: "ES256",
+			algorithm: "ES256" as const,
 			publicKey: large,
 			privateKey: new Uint8Array(large).reverse(),
 		};
@@ -73,7 +77,6 @@ describe("file permissions", () => {
 	it("saveAgent creates files with 0o600 permissions", () => {
 		saveAgent({
 			did: "did:web:test.example",
-			algorithm: "ES256",
 			domain: "test.example",
 			keyPair: {
 				algorithm: "ES256",
@@ -93,7 +96,6 @@ describe("file permissions", () => {
 	it("creates .credat directory with 0o700 permissions", () => {
 		saveAgent({
 			did: "did:web:test.example",
-			algorithm: "ES256",
 			domain: "test.example",
 			keyPair: {
 				algorithm: "ES256",
@@ -114,11 +116,10 @@ describe("file permissions", () => {
 	it("saveAgent + loadAgentFile roundtrip preserves data", () => {
 		const original = {
 			did: "did:web:roundtrip.test",
-			algorithm: "ES256",
 			domain: "roundtrip.test",
 			path: "agents/test",
 			keyPair: {
-				algorithm: "ES256",
+				algorithm: "ES256" as const,
 				publicKey: new Uint8Array([11, 22, 33]),
 				privateKey: new Uint8Array([44, 55, 66]),
 			},
@@ -129,10 +130,123 @@ describe("file permissions", () => {
 		const loaded = loadAgentFile();
 
 		expect(loaded.did).toBe(original.did);
-		expect(loaded.algorithm).toBe(original.algorithm);
+		expect(loaded.algorithm).toBe(original.keyPair.algorithm);
 		expect(loaded.domain).toBe(original.domain);
 		expect(loaded.path).toBe(original.path);
 		expect(loaded.keyPair.publicKey).toEqual(original.keyPair.publicKey);
 		expect(loaded.keyPair.privateKey).toEqual(original.keyPair.privateKey);
+	});
+});
+
+describe("owner file I/O", () => {
+	const testDir = join(process.cwd(), ".credat-owner-test");
+	const originalCwd = process.cwd();
+
+	beforeEach(() => {
+		mkdirSync(testDir, { recursive: true });
+		process.chdir(testDir);
+	});
+
+	afterEach(() => {
+		process.chdir(originalCwd);
+		rmSync(testDir, { recursive: true, force: true });
+	});
+
+	it("saveOwner + loadOwnerFile roundtrip preserves data", () => {
+		const original = {
+			did: "did:web:owner.test",
+			keyPair: {
+				algorithm: "ES256" as const,
+				publicKey: new Uint8Array([100, 200, 150]),
+				privateKey: new Uint8Array([50, 60, 70]),
+			},
+		};
+
+		saveOwner(original);
+		const loaded = loadOwnerFile();
+
+		expect(loaded.did).toBe(original.did);
+		expect(loaded.keyPair.algorithm).toBe(original.keyPair.algorithm);
+		expect(loaded.keyPair.publicKey).toEqual(original.keyPair.publicKey);
+		expect(loaded.keyPair.privateKey).toEqual(original.keyPair.privateKey);
+	});
+
+	it("loadOwnerFile throws when no owner exists", () => {
+		expect(() => loadOwnerFile()).toThrow("No owner found");
+	});
+
+	it("saveOwner creates file with 0o600 permissions", () => {
+		saveOwner({
+			did: "did:web:owner.test",
+			keyPair: {
+				algorithm: "ES256",
+				publicKey: new Uint8Array([1]),
+				privateKey: new Uint8Array([2]),
+			},
+		});
+
+		const ownerPath = join(credatDir(), "owner.json");
+		const stat = statSync(ownerPath);
+		expect(stat.mode & 0o777).toBe(0o600);
+	});
+});
+
+describe("saveDelegation", () => {
+	const testDir = join(process.cwd(), ".credat-delegation-test");
+	const originalCwd = process.cwd();
+
+	beforeEach(() => {
+		mkdirSync(testDir, { recursive: true });
+		process.chdir(testDir);
+	});
+
+	afterEach(() => {
+		process.chdir(originalCwd);
+		rmSync(testDir, { recursive: true, force: true });
+	});
+
+	it("creates delegation.json with 0o600 permissions", () => {
+		saveDelegation({
+			token: "test-token",
+			claims: {
+				agent: "did:web:test.example",
+				owner: "did:web:owner.local",
+				scopes: ["payments:read"],
+			},
+		});
+
+		const delegationPath = join(credatDir(), "delegation.json");
+		expect(existsSync(delegationPath)).toBe(true);
+
+		const stat = statSync(delegationPath);
+		expect(stat.mode & 0o777).toBe(0o600);
+	});
+});
+
+describe("truncate", () => {
+	it("returns the string unchanged when shorter than limit", () => {
+		expect(truncate("hello", 60)).toBe("hello");
+	});
+
+	it("returns the string unchanged when exactly at limit", () => {
+		const str = "a".repeat(60);
+		expect(truncate(str, 60)).toBe(str);
+	});
+
+	it("truncates with ellipsis when longer than limit", () => {
+		const str = "a".repeat(80);
+		expect(truncate(str, 60)).toBe("a".repeat(60) + "...");
+	});
+
+	it("handles empty string", () => {
+		expect(truncate("", 60)).toBe("");
+	});
+
+	it("uses default limit of 60", () => {
+		const short = "a".repeat(60);
+		expect(truncate(short)).toBe(short);
+
+		const long = "a".repeat(61);
+		expect(truncate(long)).toBe("a".repeat(60) + "...");
 	});
 });
