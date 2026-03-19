@@ -94,7 +94,7 @@ describe("renew command — happy path", () => {
 			ownerKeyPair: owner.keyPair,
 			scopes: ["payments:read", "invoices:create"],
 			constraints: { maxTransactionValue: 5000 },
-			validUntil: "2025-01-01T00:00:00Z",
+			validUntil: "2050-01-01T00:00:00Z",
 		});
 		saveDelegation(original);
 

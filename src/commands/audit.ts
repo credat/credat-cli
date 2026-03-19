@@ -41,9 +41,14 @@ function decodeToken(token: string): {
 	const payloadRaw = jwtPart.split(".")[1];
 	if (!payloadRaw) throw new Error("Malformed token: no payload segment");
 
-	const payload = JSON.parse(
-		Buffer.from(payloadRaw, "base64url").toString("utf-8"),
-	) as DecodedPayload;
+	let payload: DecodedPayload;
+	try {
+		payload = JSON.parse(
+			Buffer.from(payloadRaw, "base64url").toString("utf-8"),
+		) as DecodedPayload;
+	} catch {
+		throw new Error("Malformed token: invalid payload encoding or JSON");
+	}
 
 	const disclosures: DecodedDisclosure[] = [];
 	for (let i = 1; i < parts.length; i++) {
@@ -102,7 +107,13 @@ function auditToken(token: string): AuditFinding[] {
 		}
 	} else if (payload.validUntil) {
 		const expiry = new Date(payload.validUntil);
-		if (expiry < new Date()) {
+		if (Number.isNaN(expiry.getTime())) {
+			findings.push({
+				level: "fail",
+				rule: "expiration",
+				message: `Invalid validUntil format: ${payload.validUntil}`,
+			});
+		} else if (expiry < new Date()) {
 			findings.push({
 				level: "fail",
 				rule: "expiration",
@@ -136,7 +147,9 @@ function auditToken(token: string): AuditFinding[] {
 	const scopes = findDisclosure(disclosures, "scopes") as string[] | undefined;
 	if (scopes && Array.isArray(scopes)) {
 		const broad = scopes.filter(
-			(s) => s.endsWith(":*") || s === "*" || s === "admin",
+			(s) =>
+				typeof s === "string" &&
+				(s.endsWith(":*") || s === "*" || s === "admin"),
 		);
 		if (broad.length > 0) {
 			findings.push({
