@@ -91,11 +91,15 @@ function loadStatusList(filePath: string): {
 	};
 }
 
-function saveStatusList(filePath: string, data: StatusListData): void {
+function saveStatusList(
+	filePath: string,
+	data: StatusListData,
+	url: string,
+): void {
 	const file: StatusListFile = {
 		id: data.id,
 		issuer: data.issuer,
-		url: filePath,
+		url,
 		size: data.size,
 		encoded: encodeStatusList(data.bitstring),
 	};
@@ -155,11 +159,14 @@ export function revokeCommand(options: RevokeOptions = {}): void {
 
 	// 2. Load or create the status list
 	let listData: StatusListData;
+	let listUrl: string;
 	if (existsSync(statusListFilePath)) {
 		const loaded = loadStatusList(statusListFilePath);
 		listData = loaded.data;
+		listUrl = loaded.file.url;
 	} else {
 		listData = createDefaultStatusList();
+		listUrl = `${listData.issuer}/status/1`;
 	}
 
 	// 3. Check if already revoked
@@ -187,7 +194,7 @@ export function revokeCommand(options: RevokeOptions = {}): void {
 	setRevocationStatus(listData, index, true);
 
 	// 5. Save
-	saveStatusList(statusListFilePath, listData);
+	saveStatusList(statusListFilePath, listData, listUrl);
 
 	// 6. Output
 	if (options.json) {

@@ -89,8 +89,8 @@ program
 		"Path to status list file (default: .credat/status-list.json)",
 	)
 	.option("-i, --index <number>", "Status list index to revoke")
-	.action((options) => {
-		revokeCommand({
+	.action(async (options) => {
+		await revokeCommand({
 			token: options.token,
 			statusList: options.statusList,
 			index: options.index,
