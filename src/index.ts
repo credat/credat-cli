@@ -5,6 +5,7 @@ import { banner } from "./banner.js";
 import { delegateCommand } from "./commands/delegate.js";
 import { demoCommand } from "./commands/demo.js";
 import { initCommand } from "./commands/init.js";
+import { inspectCommand } from "./commands/inspect.js";
 import { statusCommand } from "./commands/status.js";
 import { verifyCommand } from "./commands/verify.js";
 
@@ -65,6 +66,17 @@ program
 	.description("Verify a delegation token")
 	.action(async (token) => {
 		await verifyCommand(token, { json: program.opts().json });
+	});
+
+program
+	.command("inspect [token]")
+	.description("Decode and inspect a delegation token (no verification)")
+	.option("-f, --file <path>", "Read token from a file")
+	.action(async (token, options) => {
+		await inspectCommand(token, {
+			file: options.file,
+			json: program.opts().json,
+		});
 	});
 
 program
