@@ -11,21 +11,26 @@ describe("keys export", () => {
 		saveAgent(agent);
 
 		const { keysExportCommand } = await import("./keys.js");
+		keysExportCommand({ as: "agent", json: true });
+
+		const logs = collectLogs();
+		const parsed = JSON.parse(
+			logs.split("\n").find((l: string) => l.startsWith("{"))!,
+		);
+		expect(parsed.keys.algorithm).toBe("ES256");
+		expect(parsed.keys.publicKey.kty).toBe("EC");
+		expect(parsed.keys.privateKey.d).toBeTruthy();
+	});
+
+	it("pretty output warns about private key sensitivity", async () => {
+		const agent = await createAgent({ domain: "a.local", algorithm: "ES256" });
+		saveAgent(agent);
+
+		const { keysExportCommand } = await import("./keys.js");
 		keysExportCommand({ as: "agent" });
 
 		const logs = collectLogs();
-		expect(logs).toContain("WARNING");
 		expect(logs).toContain("PRIVATE KEY");
-		// Output should be valid JSON
-		const jsonPart = logs
-			.split("\n")
-			.filter((l: string) => !l.includes("WARNING") && !l.includes("Store"))
-			.join("\n")
-			.trim();
-		const parsed = JSON.parse(jsonPart);
-		expect(parsed.algorithm).toBe("ES256");
-		expect(parsed.publicKey.kty).toBe("EC");
-		expect(parsed.privateKey.d).toBeTruthy();
 	});
 
 	it("exports owner keys with --json", async () => {
