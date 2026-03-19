@@ -3,10 +3,25 @@ import { VERSION } from "credat";
 import pc from "picocolors";
 import { banner } from "./banner.js";
 import { auditCommand } from "./commands/audit.js";
+import {
+	completionsCommand,
+	completionsInstallCommand,
+} from "./commands/completions.js";
 import { delegateCommand } from "./commands/delegate.js";
 import { demoCommand } from "./commands/demo.js";
+import {
+	handshakeChallengeCommand,
+	handshakeDemoCommand,
+	handshakePresentCommand,
+	handshakeVerifyCommand,
+} from "./commands/handshake.js";
 import { initCommand } from "./commands/init.js";
 import { inspectCommand } from "./commands/inspect.js";
+import {
+	keysExportCommand,
+	keysImportCommand,
+	keysListCommand,
+} from "./commands/keys.js";
 import { renewCommand } from "./commands/renew.js";
 import { revokeCommand } from "./commands/revoke.js";
 import { statusCommand } from "./commands/status.js";
@@ -35,12 +50,14 @@ program
 			.default("ES256"),
 	)
 	.option("-f, --force", "Overwrite existing agent identity")
+	.option("-o, --output <file>", "Write agent to custom file path")
 	.action(async (options) => {
 		await initCommand({
 			domain: options.domain,
 			path: options.path,
 			algorithm: options.algorithm,
 			force: options.force,
+			output: options.output,
 		});
 	});
 
@@ -54,6 +71,7 @@ program
 	)
 	.option("-m, --max-value <number>", "Maximum transaction value constraint")
 	.option("-u, --until <date>", "Expiration date (ISO 8601)")
+	.option("-o, --output <file>", "Write delegation to custom file path")
 	.action(async (options) => {
 		await delegateCommand({
 			agent: options.agent,
@@ -61,6 +79,7 @@ program
 			maxValue: options.maxValue,
 			until: options.until,
 			json: program.opts().json,
+			output: options.output,
 		});
 	});
 
@@ -117,6 +136,122 @@ program
 			json: program.opts().json,
 		});
 	});
+
+// ── Handshake subcommands ──
+
+const handshake = program
+	.command("handshake")
+	.description("Challenge/response trust verification flow");
+
+handshake
+	.command("challenge")
+	.description("Create a challenge for an agent")
+	.requiredOption("--from <did>", "Challenger DID")
+	.action((options) => {
+		handshakeChallengeCommand({
+			from: options.from,
+			json: program.opts().json,
+		});
+	});
+
+handshake
+	.command("present")
+	.description("Present credentials in response to a challenge")
+	.requiredOption("--challenge <json>", "Challenge JSON string")
+	.action(async (options) => {
+		await handshakePresentCommand({
+			challenge: options.challenge,
+			json: program.opts().json,
+		});
+	});
+
+handshake
+	.command("verify")
+	.description("Verify a presentation against a challenge")
+	.requiredOption("--presentation <json>", "Presentation JSON string")
+	.requiredOption("--challenge <json>", "Challenge JSON string")
+	.action(async (options) => {
+		await handshakeVerifyCommand({
+			presentation: options.presentation,
+			challenge: options.challenge,
+			json: program.opts().json,
+		});
+	});
+
+handshake
+	.command("demo")
+	.description("Run a full handshake demo between two local agents")
+	.action(async () => {
+		await handshakeDemoCommand({ json: program.opts().json });
+	});
+
+// ── Keys subcommands ──
+
+const keys = program
+	.command("keys")
+	.description("Import, export, and list key pairs");
+
+keys
+	.command("export")
+	.description("Export key pair in JWK format")
+	.addOption(
+		new Option("--as <type>", "Key type to export")
+			.choices(["agent", "owner"])
+			.default("agent"),
+	)
+	.action((options) => {
+		keysExportCommand({ as: options.as, json: program.opts().json });
+	});
+
+keys
+	.command("import <jwk-data>")
+	.description("Import key pair from JWK JSON")
+	.addOption(
+		new Option("--as <type>", "Import as agent or owner")
+			.choices(["agent", "owner"])
+			.default("agent"),
+	)
+	.action((jwkData, options) => {
+		keysImportCommand(jwkData, {
+			as: options.as,
+			json: program.opts().json,
+		});
+	});
+
+keys
+	.command("list")
+	.description("List current key fingerprints")
+	.action(() => {
+		keysListCommand({ json: program.opts().json });
+	});
+
+// ── Completions ──
+
+const completions = program
+	.command("completions")
+	.description("Generate shell completion scripts");
+
+completions
+	.command("bash")
+	.description("Generate bash completions")
+	.action(() => completionsCommand("bash"));
+
+completions
+	.command("zsh")
+	.description("Generate zsh completions")
+	.action(() => completionsCommand("zsh"));
+
+completions
+	.command("fish")
+	.description("Generate fish completions")
+	.action(() => completionsCommand("fish"));
+
+completions
+	.command("install")
+	.description("Show install instructions for your shell")
+	.action(() => completionsInstallCommand());
+
+// ── Status & Demo ──
 
 program
 	.command("status")

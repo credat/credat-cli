@@ -9,12 +9,13 @@ interface InitOptions {
 	path?: string;
 	algorithm?: "ES256" | "EdDSA";
 	force?: boolean;
+	output?: string;
 }
 
 export async function initCommand(options: InitOptions): Promise<void> {
-	const { domain, path, algorithm = "ES256", force } = options;
+	const { domain, path, algorithm = "ES256", force, output } = options;
 
-	const agentPath = join(credatDir(), "agent.json");
+	const agentPath = output ?? join(credatDir(), "agent.json");
 	if (existsSync(agentPath) && !force) {
 		console.error(
 			pc.red("  Agent identity already exists at .credat/agent.json"),
@@ -25,12 +26,12 @@ export async function initCommand(options: InitOptions): Promise<void> {
 
 	const agent = await createAgent({ domain, path, algorithm });
 
-	saveAgent(agent);
+	const savedPath = saveAgent(agent, output);
 
 	header("Agent Created");
 	label("DID", pc.green(agent.did));
 	label("Algorithm", algorithm);
-	label("Saved to", pc.dim(".credat/agent.json"));
+	label("Saved to", pc.dim(savedPath));
 
 	console.log();
 	console.log(pc.bold("  Host this DID Document at:"));
