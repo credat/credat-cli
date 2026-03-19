@@ -5,7 +5,7 @@ import {
 	readFileSync,
 	writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import {
 	type Algorithm,
 	base64urlToUint8Array,
@@ -25,6 +25,15 @@ function ensureDir(): void {
 	if (!existsSync(dir)) {
 		mkdirSync(dir, { recursive: true, mode: 0o700 });
 	}
+}
+
+export function writeSecureFile(filePath: string, data: string): void {
+	const dir = dirname(filePath);
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true, mode: 0o700 });
+	}
+	writeFileSync(filePath, data);
+	chmodSync(filePath, 0o600);
 }
 
 // ── Serialization helpers for Uint8Array <-> base64url ──
@@ -62,13 +71,16 @@ export interface SerializedAgent {
 	didDocument: unknown;
 }
 
-export function saveAgent(agent: {
-	did: string;
-	domain: string;
-	path?: string;
-	keyPair: KeyPair;
-	didDocument: unknown;
-}): void {
+export function saveAgent(
+	agent: {
+		did: string;
+		domain: string;
+		path?: string;
+		keyPair: KeyPair;
+		didDocument: unknown;
+	},
+	outputPath?: string,
+): string {
 	ensureDir();
 	const data: SerializedAgent = {
 		did: agent.did,
@@ -78,9 +90,9 @@ export function saveAgent(agent: {
 		keyPair: serializeKeyPair(agent.keyPair),
 		didDocument: agent.didDocument,
 	};
-	const filePath = join(credatDir(), "agent.json");
-	writeFileSync(filePath, JSON.stringify(data, null, "\t"));
-	chmodSync(filePath, 0o600);
+	const filePath = outputPath ?? join(credatDir(), "agent.json");
+	writeSecureFile(filePath, JSON.stringify(data, null, "\t"));
+	return filePath;
 }
 
 export function loadAgentFile(): Omit<SerializedAgent, "keyPair"> & {
@@ -147,11 +159,14 @@ export interface DelegationFile {
 	};
 }
 
-export function saveDelegation(data: { token: string; claims: unknown }): void {
+export function saveDelegation(
+	data: { token: string; claims: unknown },
+	outputPath?: string,
+): string {
 	ensureDir();
-	const filePath = join(credatDir(), "delegation.json");
-	writeFileSync(filePath, JSON.stringify(data, null, "\t"));
-	chmodSync(filePath, 0o600);
+	const filePath = outputPath ?? join(credatDir(), "delegation.json");
+	writeSecureFile(filePath, JSON.stringify(data, null, "\t"));
+	return filePath;
 }
 
 export function delegationExists(): boolean {

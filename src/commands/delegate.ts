@@ -23,6 +23,7 @@ interface DelegateCommandOptions {
 	maxValue?: string;
 	until?: string;
 	json?: boolean;
+	output?: string;
 }
 
 export async function delegateCommand(
@@ -134,7 +135,7 @@ export async function delegateCommand(
 		validUntil,
 	});
 
-	saveDelegation(delegation);
+	const savedPath = saveDelegation(delegation, options.output);
 
 	if (options.json) {
 		console.log(
@@ -165,7 +166,7 @@ export async function delegateCommand(
 
 	console.log();
 	label("Token", pc.dim(truncate(delegation.token, 80)));
-	label("Saved to", pc.dim(".credat/delegation.json"));
+	label("Saved to", pc.dim(savedPath));
 	console.log();
 	success("Delegation credential created");
 }
