@@ -303,6 +303,7 @@ describe("inspect command — real SDK token", () => {
 
 		const logs = collectLogs();
 		const jsonLine = logs.split("\n").find((l: string) => l.startsWith("{"));
+		expect(jsonLine).toBeDefined();
 		const parsed = JSON.parse(jsonLine!);
 
 		expect(parsed.header.alg).toBe("ES256");

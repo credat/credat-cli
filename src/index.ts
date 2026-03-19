@@ -72,8 +72,8 @@ program
 	.command("inspect [token]")
 	.description("Decode and inspect a delegation token (no verification)")
 	.option("-f, --file <path>", "Read token from a file")
-	.action((token, options) => {
-		inspectCommand(token, {
+	.action(async (token, options) => {
+		await inspectCommand(token, {
 			file: options.file,
 			json: program.opts().json,
 		});
