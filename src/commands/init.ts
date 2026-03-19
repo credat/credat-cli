@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { createAgent } from "credat";
+import { createAgent } from "@credat/sdk";
 import pc from "picocolors";
 import { credatDir, header, label, saveAgent, success } from "../utils.js";
 

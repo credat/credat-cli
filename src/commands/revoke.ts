@@ -7,7 +7,7 @@ import {
 	isRevoked,
 	type StatusListData,
 	setRevocationStatus,
-} from "credat";
+} from "@credat/sdk";
 import pc from "picocolors";
 import {
 	credatDir,

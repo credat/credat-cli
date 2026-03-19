@@ -6,7 +6,7 @@ import {
 	presentCredentials,
 	verifyDelegation,
 	verifyPresentation,
-} from "credat";
+} from "@credat/sdk";
 import pc from "picocolors";
 import { fail, label, sleep, step, success, truncate } from "../utils.js";
 

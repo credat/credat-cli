@@ -118,7 +118,7 @@ Credat uses **Verifiable Credentials** and **Decentralized Identifiers** (DIDs) 
 
 ## Links
 
-- [credat SDK](https://github.com/credat/credat) — core library
+- [@credat/sdk](https://www.npmjs.com/package/@credat/sdk) — core library ([GitHub](https://github.com/credat/credat))
 - [DID specification](https://www.w3.org/TR/did-core/)
 - [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)
 

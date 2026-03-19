@@ -1,5 +1,5 @@
+import { VERSION } from "@credat/sdk";
 import { Command, Option } from "commander";
-import { VERSION } from "credat";
 import pc from "picocolors";
 import { banner } from "./banner.js";
 import { auditCommand } from "./commands/audit.js";

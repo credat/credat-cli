@@ -1,4 +1,4 @@
-import { delegate } from "credat";
+import { delegate } from "@credat/sdk";
 import pc from "picocolors";
 import {
 	delegationExists,

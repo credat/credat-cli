@@ -11,7 +11,7 @@ import {
 	base64urlToUint8Array,
 	type KeyPair,
 	uint8ArrayToBase64url,
-} from "credat";
+} from "@credat/sdk";
 import pc from "picocolors";
 
 const CREDAT_DIR = ".credat";
