@@ -6,6 +6,7 @@ import { delegateCommand } from "./commands/delegate.js";
 import { demoCommand } from "./commands/demo.js";
 import { initCommand } from "./commands/init.js";
 import { inspectCommand } from "./commands/inspect.js";
+import { revokeCommand } from "./commands/revoke.js";
 import { statusCommand } from "./commands/status.js";
 import { verifyCommand } from "./commands/verify.js";
 
@@ -75,6 +76,24 @@ program
 	.action(async (token, options) => {
 		await inspectCommand(token, {
 			file: options.file,
+			json: program.opts().json,
+		});
+	});
+
+program
+	.command("revoke")
+	.description("Revoke a delegation credential via status list")
+	.option("-t, --token <token>", "Delegation token to revoke")
+	.option(
+		"-s, --status-list <path>",
+		"Path to status list file (default: .credat/status-list.json)",
+	)
+	.option("-i, --index <number>", "Status list index to revoke")
+	.action(async (options) => {
+		await revokeCommand({
+			token: options.token,
+			statusList: options.statusList,
+			index: options.index,
 			json: program.opts().json,
 		});
 	});
