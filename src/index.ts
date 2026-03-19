@@ -2,10 +2,12 @@ import { Command, Option } from "commander";
 import { VERSION } from "credat";
 import pc from "picocolors";
 import { banner } from "./banner.js";
+import { auditCommand } from "./commands/audit.js";
 import { delegateCommand } from "./commands/delegate.js";
 import { demoCommand } from "./commands/demo.js";
 import { initCommand } from "./commands/init.js";
 import { inspectCommand } from "./commands/inspect.js";
+import { renewCommand } from "./commands/renew.js";
 import { revokeCommand } from "./commands/revoke.js";
 import { statusCommand } from "./commands/status.js";
 import { verifyCommand } from "./commands/verify.js";
@@ -94,6 +96,24 @@ program
 			token: options.token,
 			statusList: options.statusList,
 			index: options.index,
+			json: program.opts().json,
+		});
+	});
+
+program
+	.command("audit [token]")
+	.description("Validate a delegation token against security best practices")
+	.action(async (token) => {
+		await auditCommand(token, { json: program.opts().json });
+	});
+
+program
+	.command("renew")
+	.description("Renew a delegation with a new expiry date")
+	.requiredOption("-u, --until <date>", "New expiration date (ISO 8601)")
+	.action(async (options) => {
+		await renewCommand({
+			until: options.until,
 			json: program.opts().json,
 		});
 	});
