@@ -5,7 +5,7 @@ import {
 	type JsonWebKey,
 	jwkToPublicKey,
 	publicKeyToJwk,
-} from "credat";
+} from "@credat/sdk";
 import pc from "picocolors";
 import {
 	credatDir,

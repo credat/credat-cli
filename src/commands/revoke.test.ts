@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createAgent, createStatusList, delegate, encodeStatusList } from "credat";
+import { createAgent, createStatusList, delegate, encodeStatusList } from "@credat/sdk";
 import { describe, expect, it } from "vitest";
 import { collectLogs, useTestDir } from "../test-utils.js";
 import { credatDir, saveDelegation, saveOwner } from "../utils.js";

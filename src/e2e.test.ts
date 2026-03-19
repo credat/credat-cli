@@ -5,7 +5,7 @@ import {
 	createStatusList,
 	delegate,
 	encodeStatusList,
-} from "credat";
+} from "@credat/sdk";
 import { describe, expect, it } from "vitest";
 import { collectLogs, useTestDir } from "./test-utils.js";
 import {

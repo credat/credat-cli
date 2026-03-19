@@ -1,4 +1,4 @@
-import { createAgent } from "credat";
+import { createAgent } from "@credat/sdk";
 import { describe, expect, it } from "vitest";
 import { collectLogs, useTestDir } from "../test-utils.js";
 import { loadAgentFile, saveAgent, saveOwner } from "../utils.js";

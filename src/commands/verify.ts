@@ -1,4 +1,4 @@
-import { verifyDelegation } from "credat";
+import { verifyDelegation } from "@credat/sdk";
 import pc from "picocolors";
 import {
 	delegationExists,

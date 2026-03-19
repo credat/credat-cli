@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createAgent } from "credat";
+import { createAgent } from "@credat/sdk";
 import { describe, expect, it } from "vitest";
 import { ExitError, collectLogs, useTestDir } from "../test-utils.js";
 import { credatDir, saveAgent } from "../utils.js";

@@ -1,4 +1,4 @@
-import { createAgent, createChallenge, delegate } from "credat";
+import { createAgent, createChallenge, delegate } from "@credat/sdk";
 import { describe, expect, it } from "vitest";
 import { collectLogs, useTestDir } from "../test-utils.js";
 import { saveAgent, saveDelegation, saveOwner } from "../utils.js";
