@@ -1,6 +1,6 @@
 {
 	"name": "@credat/cli",
-	"version": "1.0.0",
+	"version": "0.1.0-alpha.1",
 	"description": "CLI for Credat — agent identity and delegation from the terminal",
 	"publishConfig": {
 		"access": "public"
