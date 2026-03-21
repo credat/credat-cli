@@ -2,12 +2,17 @@
 	"name": "@credat/cli",
 	"version": "0.1.0-alpha.1",
 	"description": "CLI for Credat — agent identity and delegation from the terminal",
+	"publishConfig": {
+		"access": "public"
+	},
 	"type": "module",
 	"bin": {
 		"credat": "./dist/index.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"README.md",
+		"LICENSE"
 	],
 	"scripts": {
 		"build": "tsup",
@@ -15,7 +20,8 @@
 		"lint": "biome check src/",
 		"lint:fix": "biome check --write src/",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run"
+		"test": "vitest run",
+		"prepublishOnly": "npm run build"
 	},
 	"repository": {
 		"type": "git",
