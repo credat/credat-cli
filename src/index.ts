@@ -26,6 +26,7 @@ import { renewCommand } from "./commands/renew.js";
 import { revokeCommand } from "./commands/revoke.js";
 import { statusCommand } from "./commands/status.js";
 import { verifyCommand } from "./commands/verify.js";
+import { whoamiCommand } from "./commands/whoami.js";
 
 const program = new Command();
 
@@ -251,7 +252,14 @@ completions
 	.description("Show install instructions for your shell")
 	.action(() => completionsInstallCommand());
 
-// ── Status & Demo ──
+// ── Identity & Status ──
+
+program
+	.command("whoami")
+	.description("Show current agent identity (one-liner)")
+	.action(() => {
+		whoamiCommand({ json: program.opts().json });
+	});
 
 program
 	.command("status")
