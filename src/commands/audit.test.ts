@@ -26,7 +26,7 @@ describe("audit command — error paths", () => {
 
 	it("errors when no token and no delegation.json", async () => {
 		const { auditCommand } = await import("./audit.js");
-		expect(() => auditCommand(undefined)).toThrow("No token provided");
+		await expect(auditCommand(undefined)).rejects.toThrow("No token provided");
 	});
 });
 
@@ -41,7 +41,7 @@ describe("audit command — expiration checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -60,7 +60,7 @@ describe("audit command — expiration checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -79,7 +79,7 @@ describe("audit command — expiration checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -95,7 +95,7 @@ describe("audit command — expiration checks", () => {
 		]);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -117,7 +117,7 @@ describe("audit command — expiration checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -139,7 +139,7 @@ describe("audit command — scope checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -157,7 +157,7 @@ describe("audit command — scope checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -181,7 +181,7 @@ describe("audit command — constraint checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -198,7 +198,7 @@ describe("audit command — constraint checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -219,7 +219,7 @@ describe("audit command — revocation checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -241,7 +241,7 @@ describe("audit command — revocation checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -262,7 +262,7 @@ describe("audit command — issuer/subject checks", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -280,7 +280,7 @@ describe("audit command — pretty output", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token);
+		await auditCommand(token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("Security Audit");
@@ -305,7 +305,7 @@ describe("audit command — fallback to delegation.json", () => {
 		saveDelegation(d);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(undefined, { json: true });
+		await auditCommand(undefined, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);
@@ -325,7 +325,7 @@ describe("audit command — summary counts", () => {
 		);
 
 		const { auditCommand } = await import("./audit.js");
-		auditCommand(token, { json: true });
+		await auditCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const parsed = JSON.parse(logs.split("\n").find((l: string) => l.startsWith("{"))!);

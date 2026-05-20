@@ -229,10 +229,16 @@ function printPretty(result: InspectedToken): void {
 	console.log();
 }
 
-export function inspectCommand(
+export async function inspectCommand(
 	token: string | undefined,
 	options: InspectOptions = {},
-): void {
+): Promise<void> {
+	// Support piped stdin: echo $TOKEN | credat inspect -
+	if (token === "-") {
+		const { readStdin } = await import("../utils.js");
+		token = await readStdin();
+	}
+
 	const raw = resolveToken(token, options);
 	const result = parseToken(raw);
 

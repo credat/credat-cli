@@ -27,7 +27,7 @@ describe("inspect command — token resolution", () => {
 
 	it("errors when no token, no file, no delegation.json", async () => {
 		const { inspectCommand } = await import("./inspect.js");
-		expect(() => inspectCommand(undefined)).toThrow("No token provided");
+		await expect(inspectCommand(undefined)).rejects.toThrow("No token provided");
 	});
 
 	it("loads token from --file (raw token file)", async () => {
@@ -38,7 +38,7 @@ describe("inspect command — token resolution", () => {
 		writeFileSync("token.txt", token);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(undefined, { file: "token.txt" });
+		await inspectCommand(undefined, { file: "token.txt" });
 
 		const logs = collectLogs();
 		expect(logs).toContain("did:web:owner.local");
@@ -58,7 +58,7 @@ describe("inspect command — token resolution", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(undefined, { file: "my-delegation.json" });
+		await inspectCommand(undefined, { file: "my-delegation.json" });
 
 		const logs = collectLogs();
 		expect(logs).toContain("did:web:file-owner");
@@ -67,9 +67,9 @@ describe("inspect command — token resolution", () => {
 
 	it("errors on --file with non-existent file", async () => {
 		const { inspectCommand } = await import("./inspect.js");
-		expect(() =>
+		await expect(
 			inspectCommand(undefined, { file: "nope.json" }),
-		).toThrow("File not found");
+		).rejects.toThrow("File not found");
 	});
 
 	it("falls back to .credat/delegation.json", async () => {
@@ -91,7 +91,7 @@ describe("inspect command — token resolution", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(undefined);
+		await inspectCommand(undefined);
 
 		const logs = collectLogs();
 		expect(logs).toContain("did:web:fallback-owner");
@@ -120,7 +120,7 @@ describe("inspect command — decoding", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(token);
+		await inspectCommand(token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("ES256");
@@ -144,7 +144,7 @@ describe("inspect command — decoding", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(token);
+		await inspectCommand(token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("valid");
@@ -158,7 +158,7 @@ describe("inspect command — decoding", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(token);
+		await inspectCommand(token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("expired");
@@ -172,7 +172,7 @@ describe("inspect command — decoding", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(token);
+		await inspectCommand(token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("not yet valid");
@@ -182,7 +182,7 @@ describe("inspect command — decoding", () => {
 		const token = fakeToken({ alg: "ES256" }, { iss: "did:web:o" });
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(token);
+		await inspectCommand(token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("no expiry set");
@@ -194,18 +194,18 @@ describe("inspect command — malformed tokens", () => {
 
 	it("throws on completely invalid token", async () => {
 		const { inspectCommand } = await import("./inspect.js");
-		expect(() => inspectCommand("not-a-token")).toThrow();
+		await expect(inspectCommand("not-a-token")).rejects.toThrow();
 	});
 
 	it("throws on empty token", async () => {
 		const { inspectCommand } = await import("./inspect.js");
-		expect(() => inspectCommand("")).toThrow("No token provided");
+		await expect(inspectCommand("")).rejects.toThrow("No token provided");
 	});
 
 	it("throws on token with only one segment", async () => {
 		const hdr = Buffer.from('{"alg":"ES256"}').toString("base64url");
 		const { inspectCommand } = await import("./inspect.js");
-		expect(() => inspectCommand(hdr)).toThrow("Malformed token");
+		await expect(inspectCommand(hdr)).rejects.toThrow("Malformed token");
 	});
 });
 
@@ -224,7 +224,7 @@ describe("inspect command — JSON output", () => {
 		);
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(token, { json: true });
+		await inspectCommand(token, { json: true });
 
 		const logs = collectLogs();
 		const jsonLine = logs.split("\n").find((l: string) => l.startsWith("{"));
@@ -263,7 +263,7 @@ describe("inspect command — real SDK token", () => {
 		});
 
 		const { inspectCommand } = await import("./inspect.js");
-		inspectCommand(delegation.token);
+		await inspectCommand(delegation.token);
 
 		const logs = collectLogs();
 		expect(logs).toContain("ES256");
@@ -299,7 +299,7 @@ describe("inspect command — real SDK token", () => {
 
 		const { inspectCommand } = await import("./inspect.js");
 		// No token arg — should load from delegation.json
-		inspectCommand(undefined, { json: true });
+		await inspectCommand(undefined, { json: true });
 
 		const logs = collectLogs();
 		const jsonLine = logs.split("\n").find((l: string) => l.startsWith("{"));

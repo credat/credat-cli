@@ -216,3 +216,20 @@ export function step(num: number, text: string): void {
 export function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// ── Stdin helpers ──
+
+/**
+ * Read all data from stdin (piped input).
+ * Only call this when the user explicitly passes "-" as the token argument.
+ */
+export function readStdin(): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		process.stdin.on("data", (chunk: Buffer) => chunks.push(chunk));
+		process.stdin.on("end", () =>
+			resolve(Buffer.concat(chunks).toString("utf-8").trim()),
+		);
+		process.stdin.on("error", reject);
+	});
+}

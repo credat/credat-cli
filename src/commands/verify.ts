@@ -19,6 +19,12 @@ export async function verifyCommand(
 	token: string | undefined,
 	options: VerifyOptions = {},
 ): Promise<void> {
+	// Support piped stdin: echo $TOKEN | credat verify -
+	if (token === "-") {
+		const { readStdin } = await import("../utils.js");
+		token = await readStdin();
+	}
+
 	if (!token) {
 		if (delegationExists()) {
 			const data = loadDelegationFile();

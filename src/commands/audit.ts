@@ -261,10 +261,16 @@ const ICONS: Record<AuditFinding["level"], string> = {
 	fail: pc.red("✗"),
 };
 
-export function auditCommand(
+export async function auditCommand(
 	token: string | undefined,
 	options: AuditOptions = {},
-): void {
+): Promise<void> {
+	// Support piped stdin: echo $TOKEN | credat audit -
+	if (token === "-") {
+		const { readStdin } = await import("../utils.js");
+		token = await readStdin();
+	}
+
 	if (!token) {
 		if (delegationExists()) {
 			token = loadDelegationFile().token;
