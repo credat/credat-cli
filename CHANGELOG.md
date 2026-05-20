@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2-alpha.1](https://github.com/credat/credat-cli/compare/v0.1.1-alpha.1...v0.1.2-alpha.1) (2026-05-20)
+
+
+### Features
+
+* add whoami command for one-liner identity display ([6b7ac7d](https://github.com/credat/credat-cli/commit/6b7ac7dd6d6ddea2c7fa9a6ccb7ee0abb96f0f9b))
+* support piped stdin input for audit/inspect/verify ([b1b5818](https://github.com/credat/credat-cli/commit/b1b58184c3288889a72b25023018b58e96120ec1))
+
 ## [0.1.1-alpha.1](https://github.com/credat/credat-cli/compare/v0.1.0-alpha.1...v0.1.1-alpha.1) (2026-03-21)
 
 
